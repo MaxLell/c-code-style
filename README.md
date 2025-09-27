@@ -1350,7 +1350,7 @@ int32_t my_variable;        /* Actually defined in source */
 - Header file example (no license for sake of an example)
 ```c
 /* License comes here */
-#ifndef TEMPLATE_HDR_H
+#if !defined(TEMPLATE_HDR_H)
 #define TEMPLATE_HDR_H
 
 /* Include headers */
@@ -1365,7 +1365,8 @@ extern "C" {
 }
 #endif /* __cplusplus */
 
-#endif /* TEMPLATE_HDR_H */
+#endif /* !defined(TEMPLATE_HDR_H) */
+
 ```
 ## Tool Integrations
 

@@ -10,7 +10,10 @@ This document describes C code style used by Tilen MAJERLE in his projects and l
   - [Integration with VSCode](#integration-with-vscode)
   - [Conventions used](#conventions-used)
   - [General rules](#general-rules)
+        - [Whitespace and indentation](#whitespace-and-indentation)
+        - [Declarations and initialization](#declarations-and-initializations)
   - [Comments](#comments)
+        - [Comment style](#comment-style)
   - [Functions](#functions)
   - [Variables](#variables)
   - [Structures, enumerations, typedefs](#structures-enumerations-typedefs)
@@ -19,6 +22,9 @@ This document describes C code style used by Tilen MAJERLE in his projects and l
   - [Macros and preprocessor directives](#macros-and-preprocessor-directives)
   - [Documentation](#documentation)
   - [Header/source files](#headersource-files)
+    - [File naming convention](#file-naming-convention)
+  - [Assertions](#assertions)
+  - [Tools](#tool-integrations)
   - [Clang format integration](#clang-format-integration)
   - [Artistic style configuration](#artistic-style-configuration)
   - [Eclipse formatter](#eclipse-formatter)
@@ -55,6 +61,8 @@ The keywords *MUST*, *MUST NOT*, *REQUIRED*, *SHALL*, *SHALL NOT*, *SHOULD*, *SH
 
 Here are listed most obvious and important general rules. Please check them carefully before you continue with other chapters.
 
+### Whitespace and indentation
+
 - `clang-format` SHOULD be used with formatting file attached to this repository (version `15.x` is a minimum)
 - Use `C11` standard
 - Do not use tabs, use spaces instead
@@ -87,12 +95,11 @@ int32_t a = sum (4, 3);             /* Wrong */
 - Opening curly bracket is always at the same line as keyword (`for`, `while`, `do`, `switch`, `if`, ...)
 ```c
 size_t i;
-for (i = 0; i < 5; ++i) {           /* OK */
-}
-for (i = 0; i < 5; ++i){            /* Wrong */
-}
-for (i = 0; i < 5; ++i)             /* Wrong */
+for (i = 0; i < 5; ++i)             /* Preferred style: opening brace on next line */
 {
+}
+/* Wrong for this project (keeps brace on same line) */
+for (i = 0; i < 5; ++i) {           /* Not preferred */
 }
 ```
 
@@ -122,6 +129,7 @@ static int32_t a = 0;   /* Wrong */
 > It quickly becomes tricky to handle all the cases, especially when user declares custom RAM sections.
 > Startup script is in-charge to set default values (.data and .bss) while other custom sections may not be filled with default values, which leads to variables with init value won't have any effect.
 >
+
 > To be independent of such problem, create init function for each module and use it to set
 > default values for all of your variables, like so:
 
@@ -130,17 +138,18 @@ static int32_t a;       /* OK */
 static int32_t b = 4;   /* Wrong - this value may not be set at zero 
                             if linker script&startup files are not properly handled */
 
-void
-my_module_init(void) {
+void my_module_init(void)
+{
     a = 0;
     b = 4;
 }
 ```
 
+### Declarations and initializations
 - Declare all local variables of the same type in the same line
 ```c
-void
-my_func(void) {
+void my_func(void)
+{
     /* 1 */
     char a;             /* OK */
     
@@ -158,8 +167,8 @@ my_func(void) {
     2. Integer types, wider unsigned type first
     3. Single/Double floating point
 ```c
-int
-my_func(void) {
+int my_func(void)
+{
     /* 1 */
     my_struct_t my;     /* First custom structures */
     my_struct_ptr_t* p; /* Pointers too */
@@ -228,12 +237,15 @@ for (size_t i = 0; i < 10; ++i)
 
 /* OK, if you need counter variable later */
 size_t i;
-for (i = 0; i < 10; ++i) {
-    if (...) {
+for (i = 0; i < 10; ++i) 
+{
+    if (...) 
+    {
         break;
     }
 }
-if (i == 10) {
+if (i == 10) 
+{
 
 }
 
@@ -244,8 +256,8 @@ for (i = 0; i < 10; ++i) ...
 
 - Avoid variable assignment with function call in declaration, except for single variables
 ```c
-void
-a(void) {
+void a(void)
+{
     /* Avoid function calls when declaring variable */
     int32_t a, b = sum(1, 2);
 
@@ -278,12 +290,14 @@ void* ptr;
 /* ... */
 
 /* OK, compare against NULL */
-if (ptr == NULL || ptr != NULL) {
+if (ptr == NULL || ptr != NULL) 
+{
 
 }
 
 /* Wrong */
-if (ptr || !ptr) {
+if (ptr || !ptr) 
+{
 
 }
 ```
@@ -305,26 +319,26 @@ for (size_t j = 0; j < 10; ++j) {}  /* OK */
 ```c
 
 /* When d could be modified, data pointed to by d could not be modified */
-void
-my_func(const void* d) {
+void my_func(const void* d)
+{
 
 }
 
 /* When d and data pointed to by d both could not be modified */
-void
-my_func(const void* const d) {
+void my_func(const void* const d)
+{
 
 }
 
 /* Not REQUIRED, it is advised */
-void
-my_func(const size_t len) {
+void my_func(const size_t len)
+{
 
 }
 
 /* When d should not be modified inside function, only data pointed to by d could be modified */
-void
-my_func(void* const d) {
+void my_func(void* const d)
+{
 
 }
 ```
@@ -341,14 +355,14 @@ my_func(void* const d) {
  * thus use `void *`
  */
 /* OK example */
-void
-send_data(const void* data, size_t len) { /* OK */
+void send_data(const void* data, size_t len)
+{ /* OK */
     /* Do not cast `void *` or `const void *` */
     const uint8_t* d = data;/* Function handles proper type for internal usage */
 }
 
-void
-send_data(const void* data, int len) {    /* Wrong, not not use int */
+void send_data(const void* data, int len)
+{    /* Wrong, not not use int */
 }
 ```
 
@@ -358,8 +372,8 @@ send_data(const void* data, int len) {    /* Wrong, not not use int */
 ```c
 /* OK */
 #include <stdlib.h>
-void
-my_func(size_t size) {
+void my_func(size_t size)
+{
     int32_t* arr;
     arr = malloc(sizeof(*arr) * n); /* OK, Allocate memory */
     arr = malloc(sizeof *arr * n);  /* Wrong, brackets for sizeof operator are missing */
@@ -371,8 +385,8 @@ my_func(size_t size) {
 }
 
 /* Wrong */
-void
-my_func(size_t size) {
+void my_func(size_t size)
+{
     int32_t arr[size];  /* Wrong, do not use VLA */
 }
 ```
@@ -406,10 +420,12 @@ if (is_ok == 0)     /* Wrong, use ! for negative check */
 - Always respect code style already used in project or library
 
 ## Comments
+### Comment style
 
-- Comments starting with `//` are not allowed. Always use `/* comment */`, even for single-line comment
+- Comments starting with `//` are allowed. 
+- Comments with `/* ... */` is allowed
 ```c
-//This is comment (wrong)
+// This is comment (ok)
 /* This is comment (ok) */
 ```
 
@@ -437,8 +453,8 @@ if (is_ok == 0)     /* Wrong, use ! for negative check */
 
 - Use `12` indents (`12 * 4` spaces) offset when commenting. If statement is larger than `12` indents, make comment `4-spaces` aligned (examples below) to next available indent
 ```c
-void
-my_func(void) {
+void my_func(void)
+{
     char a, b;
 
     a = call_func_returning_char_a(a);          /* This is comment with 12*4 spaces indent from beginning of line */
@@ -484,22 +500,36 @@ const char * get(void);
 
 - Function implementation MUST include return type and optional other keywords in separate line
 ```c
-/* OK */
-int32_t
-foo(void) {
+/* Preferred: keep return type and function name on the same line */
+int32_t foo(void)
+{
     return 0;
 }
 
-/* OK */
-static const char*
-get_string(void) {
+/* Preferred for pointers as well */
+static const char* get_string(void)
+{
     return "Hello world!\r\n";
 }
-
-/* Wrong */
-int32_t foo(void) {
+```
+- Function parameter prefixes: Function parameters SHALL include an additional prefix indicating whether they are input, output or input/output parameters. Use the prefixes `in_`, `out_` and `inout_` respectively. This improves readability and documents parameter direction at the API level.
+```c
+/* Example */
+int32_t process_data(const uint8_t* in_data, size_t in_len, uint8_t* out_buf, size_t* out_len)
+{
+    /* implementation */
     return 0;
 }
+
+/* Preferred API signature with prefixes */
+int32_t process_data(const uint8_t* in_data, size_t in_len, uint8_t* out_buf, size_t* out_len)
+{
+    /* implementation */
+    return 0;
+}
+
+/* Better: Prefixes in prototype/documentation */
+int32_t process_data(const uint8_t* in_data, size_t in_len, uint8_t* out_buf, size_t* out_len);
 ```
 
 ## Variables
@@ -517,10 +547,16 @@ int32_t myVar;
 int32_t MYVar;
 ```
 
+- Variables which are global in a project SHALL have prefix `g_`.
+    Example:
+```c
+static I2C_HandleTypeDef g_i2c_handle;
+```
+
 - Group local variables together by `type`
 ```c
-void
-foo(void) {
+void foo(void)
+{
     int32_t a, b;   /* OK */
     char a;
     char b;         /* Wrong, char type already exists */
@@ -529,8 +565,8 @@ foo(void) {
 
 - Do not declare variable after first executable statement
 ```c
-void
-foo(void) {
+void foo(void)
+{
     int32_t a;
     a = bar();
     int32_t b;      /* Wrong, there is already executable statement */
@@ -541,7 +577,8 @@ foo(void) {
 ```c
 int32_t a, b;
 a = foo();
-if (a) {
+if (a) 
+{
     int32_t c, d;   /* OK, c and d are in if-statement scope */
     c = foo();
     int32_t e;      /* Wrong, there was already executable statement inside block */
@@ -649,7 +686,8 @@ typedef uint8_t (*my_func_typedef_fn)(uint8_t p1, const char* p2);
 - Every compound statement MUST include single indent; when nesting statements, include `1` indent size for each nest
 ```c
 /* OK */
-if (c) {
+if (c) 
+{
     do_a();
 } else {
     do_b();
@@ -669,7 +707,8 @@ else do_b();
 - In case of `if` or `if-else-if` statement, `else` MUST be in the same line as closing bracket of first statement
 ```c
 /* OK */
-if (a) {
+if (a) 
+{
 
 } else if (b) {
 
@@ -719,11 +758,13 @@ while (check());
 
 - Indentation is REQUIRED for every opening bracket
 ```c
-if (a) {
+if (a) 
+{
     do_a();
 } else {
     do_b();
-    if (c) {
+    if (c) 
+    {
         do_c();
     }
 }
@@ -768,7 +809,8 @@ while (*addr & (1 << 13));          /* Wrong, curly brackets are missing. Can le
 ```c
 /* Not recommended */
 int32_t a = 0;
-while (a < 10) {
+while (a < 10) 
+{
     .
     ..
     ...
@@ -776,12 +818,14 @@ while (a < 10) {
 }
 
 /* Better */
-for (size_t a = 0; a < 10; ++a) {
+for (size_t a = 0; a < 10; ++a) 
+{
 
 }
 
 /* Better, if inc may not happen in every cycle */
-for (size_t a = 0; a < 10; ) {
+for (size_t a = 0; a < 10; ) 
+{
     if (...) {
         ++a;
     }
@@ -799,9 +843,11 @@ switch (condition ? if_yes : if_no) {...}   /* OK */
 condition ? call_to_function_a() : call_to_function_b();
 
 /* Rework to have better program flow */
-if (condition) {
+if (condition) 
+{
     call_to_function_a();
-} else {
+} else 
+{
     call_to_function_b();
 }
 ```
@@ -813,7 +859,8 @@ if (condition) {
 ```c
 /* OK, every case has single indent */
 /* OK, every break has additional indent */
-switch (check()) {
+switch (check()) 
+{
     case 0:
         do_a();
         break;
@@ -825,7 +872,8 @@ switch (check()) {
 }
 
 /* Wrong, case indent missing */
-switch (check()) {
+switch (check()) 
+{
 case 0:
     do_a();
     break;
@@ -837,7 +885,8 @@ default:
 }
 
 /* Wrong */
-switch (check()) {
+switch (check()) 
+{
     case 0:
         do_a();
     break;      /* Wrong, break MUST have indent as it is under case */
@@ -852,7 +901,8 @@ switch (check()) {
 - Always include `default` statement
 ```c
 /* OK */
-switch (var) {
+switch (var) 
+{
     case 0:
         do_job();
         break;
@@ -861,7 +911,8 @@ switch (var) {
 }
 
 /* Wrong, default is missing */
-switch (var) {
+switch (var) 
+{
     case 0:
         do_job();
         break;
@@ -869,11 +920,12 @@ switch (var) {
 ```
 
 - If local variables are REQUIRED, use curly brackets and put `break` statement inside.
-    - Put opening curly bracket in the same line as `case` statement
 ```c
-switch (a) {
+switch (a) 
+{
     /* OK */
-    case 0: {
+    case 0: 
+    {
         int32_t a, b;
         char c;
         a = 5;
@@ -881,15 +933,9 @@ switch (a) {
         break;
     }
 
-    /* Wrong */
-    case 1:
-    {
-        int32_t a;
-        break;
-    }
-
     /* Wrong, break shall be inside */
-    case 2: {
+    case 1: 
+    {
         int32_t a;
     }
     break;
@@ -1104,8 +1150,8 @@ typedef enum {
  * \param[in]       b: Second number
  * \return          Sum of input values
  */
-int32_t
-sum(int32_t a, int32_t b) {
+int32_t sum(int32_t a, int32_t b)
+{
     return a + b;
 }
 
@@ -1116,8 +1162,8 @@ sum(int32_t a, int32_t b) {
  * \param[in]       b: Second number
  * \param[out]      result: Output variable used to save result
  */
-void
-void_sum(int32_t a, int32_t b, int32_t* result) {
+void void_sum(int32_t a, int32_t b, int32_t* result)
+{
     *result = a + b;
 }
 ```
@@ -1136,8 +1182,8 @@ typedef enum {
  * \brief           Check some value
  * \return          \ref MY_OK on success, member of \ref my_enum_t otherwise
  */
-my_enum_t
-check_value(void) {
+my_enum_t check_value(void)
+{
     return MY_OK;
 }
 ```
@@ -1149,8 +1195,8 @@ check_value(void) {
  * \param[in]       in: Input data
  * \return          Pointer to output data on success, `NULL` otherwise
  */
-const void *
-get_data(const void* in) {
+const void* get_data(const void* in)
+{
     return in;
 }
 ```
@@ -1167,7 +1213,70 @@ get_data(const void* in) {
 #define MIN(x, y)       ((x) < (y) ? (x) : (y))
 ```
 
+## Assertions
+
+- Use assert to check assumptions in the code. 
+    - All pointer arguments of public functions shall be checked with assert at the start of the function.
+    - All Input Arguments of functions need to be checked for their validity and boundaries.
+    - Where possible and where reasonable check the validity of function output with asserts.
+
+Assertions are for catching programmer mistakes, not for runtime error handling. Write custom error handling for that matter
+
+- Release Builds: Assertions are enabled in Debug builds, disabled in Release builds.
+
+- Examples
+
+```C
+int sum_array(const int *in_array, size_t in_array_length)
+{
+    // Input Argument Checks (can be seen as precondition)
+    ASSERT(in_array != NULL);                             // NULL Ptr check
+    ASSERT(in_array_length > 0 && in_array_length < 100); // Boundary Checks
+
+    int sum = 0;
+    for (size_t i = 0; i < in_array_length; ++i) {
+        ASSERT(sum <= INT_MAX - in_array[i]); // Invariant check - prevent integer overflow
+        /**
+         * Handle overflow: return error, saturate, log, ...
+         */
+        sum += in_array[i];
+    }
+    return sum;
+}
+
+```
+
+```C
+switch (state) {
+  case STATE_IDLE: break;
+  case STATE_RUN: break;
+  default: ASSERT(0);   // Use ASSERTs for unreachable code
+}
+
+```
+
 ## Header/source files
+
+### File naming convention
+
+Source and header file names MUST use lowercase characters only. Use snake_case (lowercase words separated by underscores) for multi-word names or a single lowercase letter for very small helper files. Do NOT use camelCase, mixed case, spaces or other separators.
+
+ Good examples:
+```text
+my_driver.c
+my_driver.h
+utils.c
+i2c_port.c
+a.h        # single-letter helper header (allowed)
+```
+
+Bad examples:
+```text
+MyDriver.c      # camel case
+my-driver.c     # dash separator
+My_Driver.h     # mixed case
+my driver.c     # spaces
+```
 
 - Leave single empty line at the end of file
 - Every file MUST include doxygen annotation for `file` and `brief` description followed by empty line (when using doxygen)
@@ -1258,8 +1367,9 @@ extern "C" {
 
 #endif /* TEMPLATE_HDR_H */
 ```
+## Tool Integrations
 
-## Clang format integration
+### Clang format integration
 
 Repository comes with always-up-to-date `.clang-format` file, an input configuration
 for `clang-format` tool. It can be seamlessly integrated with most of latest techno
@@ -1267,20 +1377,8 @@ IDEs, including VSCode. Formatting then happens on the spot on each file save.
 
 https://code.visualstudio.com/docs/cpp/cpp-ide#_code-formatting
 
-## Artistic style configuration
 
-[AStyle](http://astyle.sourceforge.net/) is a great piece of software that can
-help with formatting the code based on input configuration.
-
-This repository contains `astyle-code-format.cfg` file which can be used with `AStyle` software.
-
-```
-astyle --options="astyle-code-format.cfg" "input_path/*.c,*.h" "input_path2/*.c,*.h"
-```
-
-> Artistic style configuration is obsolete and no longer updated
-
-## Eclipse formatter
+### Eclipse formatter
 
 Repository contains `eclipse-ext-kr-format.xml` file that can be used with
 eclipse-based toolchains to set formatter options.

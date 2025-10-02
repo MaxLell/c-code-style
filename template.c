@@ -4,7 +4,7 @@
  */
 
 /*
- * Copyright (c) 2023 Tilen MAJERLE
+ * Copyright (c) 2025 Max Koell
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,11 +26,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * This file is part of my_library.
- *
- * Author:          Tilen MAJERLE <tilen@majerle.eu>
- * Version:         v1.y.z
+ * Author:          Max Koell <maxkoell@proton.me>
  */
+
 #include "template.h"
 
 /**
@@ -39,7 +37,4 @@
  * \param[in]       b: Second value
  * \return          Sum of input values
  */
-int32_t
-sum(int32_t a, int32_t b) {
-    return a + b;
-}
+int32_t sum(int32_t a, int32_t b) { return a + b; }

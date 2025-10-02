@@ -4,7 +4,7 @@
  */
 
 /*
- * Copyright (c) 2023 Tilen MAJERLE
+ * Copyright (c) 2025 Max Koell
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,10 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * This file is part of your_library_name.
- *
- * Author:          Tilen MAJERLE <tilen@majerle.eu>
- * Version:         $_version_$
+ * Author:          Max Koell <maxkoell@proton.me>
  */
 #ifndef TEMPLATE_HDR_H
 #define TEMPLATE_HDR_H
@@ -37,12 +34,13 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif /* __cplusplus */
 
-/* Function prototypes, name aligned, lowercase names */
-int32_t sum(int32_t a, int32_t b);
-int32_t divide(int32_t a, int32_t b);
+    /* Function prototypes, name aligned, lowercase names */
+    int32_t sum(int32_t a, int32_t b);
+    int32_t divide(int32_t a, int32_t b);
 
 #ifdef __cplusplus
 }

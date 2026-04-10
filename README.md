@@ -689,7 +689,8 @@ typedef uint8_t (*my_func_typedef_fn)(uint8_t p1, const char* p2);
 if (c) 
 {
     do_a();
-} else
+} 
+else
 {
     do_b();
 }

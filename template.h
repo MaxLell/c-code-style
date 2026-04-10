@@ -38,9 +38,9 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-/* Function prototypes, name aligned, lowercase names */
-int32_t sum(int32_t a, int32_t b);
-int32_t divide(int32_t a, int32_t b);
+    /* Function prototypes, name aligned, lowercase names */
+    int32_t sum(int32_t a, int32_t b);
+    int32_t divide(int32_t a, int32_t b);
 
 #ifdef __cplusplus
 }

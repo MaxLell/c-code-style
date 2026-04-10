@@ -26,8 +26,6 @@ This document describes C code style used by Tilen MAJERLE in his projects and l
   - [Assertions](#assertions)
   - [Tools](#tool-integrations)
   - [Clang format integration](#clang-format-integration)
-  - [Artistic style configuration](#artistic-style-configuration)
-  - [Eclipse formatter](#eclipse-formatter)
 
 ## The single most important rule
 
@@ -92,13 +90,13 @@ int32_t a = sum (4, 3);             /* Wrong */
     - Prefer `prv_` name prefix for strictly module-private (static) functions
     - Prefer `libname_int_` or `libnamei_` prefix for library internal functions, that should not be used by the user application while they MUST be used across different library internal modules
 - Use only lowercase characters for variables/functions/types with optional underscore `_` char
-- Opening curly bracket is always at the same line as keyword (`for`, `while`, `do`, `switch`, `if`, ...)
+- Opening curly bracket starts on the next line after the controlling keyword or declaration (`for`, `while`, `do`, `switch`, `if`, `function`, `struct`, ...)
 ```c
 size_t i;
-for (i = 0; i < 5; ++i)             /* Preferred style: opening brace on next line */
+for (i = 0; i < 5; ++i)             /* OK */
 {
 }
-/* Wrong for this project (keeps brace on same line) */
+/* Wrong */
 for (i = 0; i < 5; ++i) {           /* Not preferred */
 }
 ```
@@ -119,11 +117,12 @@ func_name(5, 4);        /* OK */
 func_name(4,3);         /* Wrong */
 ```
 
-- Do not initialize `global` variables to any default value (or `NULL`), implement it in the dedicated `init` function (if REQUIRED).
+- Global variables may be initialized when it makes the module clearer or safer.
+- If a variable is placed in a custom memory section that is not initialized by the startup code, initialize it in a dedicated `init` function instead.
 ```c
-static int32_t a;       /* Wrong */
-static int32_t b = 4;   /* Wrong */
-static int32_t a = 0;   /* Wrong */
+static int32_t a;       /* OK */
+static int32_t b = 4;   /* OK */
+static void* ptr = NULL;/* OK */
 ```
 > In embedded systems, it is very common that RAM memories are scattered across different memory locations in the system.
 > It quickly becomes tricky to handle all the cases, especially when user declares custom RAM sections.
@@ -135,8 +134,7 @@ static int32_t a = 0;   /* Wrong */
 
 ```c
 static int32_t a;       /* OK */
-static int32_t b = 4;   /* Wrong - this value may not be set at zero 
-                            if linker script&startup files are not properly handled */
+static int32_t b;       /* OK - initialize in init when startup code cannot guarantee it */
 
 void my_module_init(void)
 {
@@ -406,7 +404,7 @@ if (is_ok == 1)     /* Wrong, never compare boolean variable against 1! */
 if (is_ok == 0)     /* Wrong, use ! for negative check */
 ```
 
-- Always use `/* comment */` for comments, even for *single-line* comment
+- Both `//` and block comments are allowed
 - Always include check for `C++` with `extern` keyword in header file
 - Every function MUST include *doxygen-enabled* comment, even if function is `static`
 - Use English names/text for functions, variables, comments
@@ -423,21 +421,23 @@ if (is_ok == 0)     /* Wrong, use ! for negative check */
 ### Comment style
 
 - Comments starting with `//` are allowed. 
-- Comments with `/* ... */` is allowed
+- Comments with `/* ... */` and `/** ... */` are allowed
 ```c
 // This is comment (ok)
 /* This is comment (ok) */
+/** This is comment (preferred for multi-line blocks) */
 ```
 
-- For multi-line comments use `space+asterisk` for every line
+- For multi-line comments prefer `/** ... */` and use `space+asterisk` for every inner line
 ```c
-/*
+/**
  * This is multi-line comments,
- * written in 2 lines (ok)
+ * written in 2 lines (preferred)
  */
 
-/**
- * Wrong, use double-asterisk only for doxygen documentation
+/*
+ * This is also allowed,
+ * but `/** ... */` is preferred for multi-line blocks
  */
 
 /*
@@ -498,9 +498,9 @@ void set(int32_t a);
 const char * get(void);
 ```
 
-- Function implementation MUST include return type and optional other keywords in separate line
+- Function implementation MUST keep return type, optional qualifiers and function name on the same line
 ```c
-/* Preferred: keep return type and function name on the same line */
+/* Preferred */
 int32_t foo(void)
 {
     return 0;
@@ -512,24 +512,24 @@ static const char* get_string(void)
     return "Hello world!\r\n";
 }
 ```
-- Function parameter prefixes: Function parameters SHALL include an additional prefix indicating whether they are input, output or input/output parameters. Use the prefixes `in_`, `out_` and `inout_` respectively. This improves readability and documents parameter direction at the API level.
+- Function parameter prefixes: Pointer parameters SHALL include an additional prefix indicating whether they are input, output or input/output parameters. Use the prefixes `in_`, `out_` and `inout_` respectively. Value parameters do not need these prefixes.
 ```c
 /* Example */
-int32_t process_data(const uint8_t* in_data, size_t in_len, uint8_t* out_buf, size_t* out_len)
+int32_t process_data(const uint8_t* in_data, size_t len, uint8_t* out_buf, size_t* out_len)
 {
     /* implementation */
     return 0;
 }
 
-/* Preferred API signature with prefixes */
-int32_t process_data(const uint8_t* in_data, size_t in_len, uint8_t* out_buf, size_t* out_len)
+/* Preferred API signature with pointer prefixes */
+int32_t process_data(const uint8_t* in_data, size_t len, uint8_t* out_buf, size_t* out_len)
 {
     /* implementation */
     return 0;
 }
 
 /* Better: Prefixes in prototype/documentation */
-int32_t process_data(const uint8_t* in_data, size_t in_len, uint8_t* out_buf, size_t* out_len);
+int32_t process_data(const uint8_t* in_data, size_t len, uint8_t* out_buf, size_t* out_len);
 ```
 
 ## Variables
@@ -689,7 +689,8 @@ typedef uint8_t (*my_func_typedef_fn)(uint8_t p1, const char* p2);
 if (c) 
 {
     do_a();
-} else {
+} else
+{
     do_b();
 }
 
@@ -704,15 +705,17 @@ if (c) do_a();
 else do_b();
 ```
 
-- In case of `if` or `if-else-if` statement, `else` MUST be in the same line as closing bracket of first statement
+- In case of `if` or `if-else-if` statement, `else` SHOULD stay on the same line as the closing bracket of the previous branch, while its opening curly bracket starts on the next line
 ```c
 /* OK */
 if (a) 
 {
 
-} else if (b) {
+} else if (b)
+{
 
-} else {
+} else
+{
 
 }
 
@@ -737,7 +740,8 @@ else
 - In case of `do-while` statement, `while` part MUST be in the same line as closing bracket of `do` part
 ```c
 /* OK */
-do {
+do
+{
     int32_t a;
     a = do_a();
     do_b(a);
@@ -761,7 +765,8 @@ while (check());
 if (a) 
 {
     do_a();
-} else {
+} else
+{
     do_b();
     if (c) 
     {
@@ -1140,6 +1145,7 @@ typedef enum {
 - Documentation for functions MUST be written in function implementation (source file usually)
 - Function MUST include `brief` and all parameters documentation
 - Every parameter MUST be noted if it is `in` or `out` for *input* and *output* respectively
+- Pointer parameters SHOULD use matching `in_`, `out_` or `inout_` prefixes
 - Function MUST include `return` parameter if it returns something. This does not apply for `void` functions
 - Function can include other doxygen keywords, such as `note` or `warning`
 - Use colon `:` between parameter name and its description
@@ -1160,11 +1166,11 @@ int32_t sum(int32_t a, int32_t b)
  * \note            This function does not return value, it stores it to pointer instead
  * \param[in]       a: First number
  * \param[in]       b: Second number
- * \param[out]      result: Output variable used to save result
+ * \param[out]      out_result: Output variable used to save result
  */
-void void_sum(int32_t a, int32_t b, int32_t* result)
+void void_sum(int32_t a, int32_t b, int32_t* out_result)
 {
-    *result = a + b;
+    *out_result = a + b;
 }
 ```
 
@@ -1340,12 +1346,3 @@ for `clang-format` tool. It can be seamlessly integrated with most of latest tec
 IDEs, including VSCode. Formatting then happens on the spot on each file save.
 
 https://code.visualstudio.com/docs/cpp/cpp-ide#_code-formatting
-
-
-### Eclipse formatter
-
-Repository contains `eclipse-ext-kr-format.xml` file that can be used with
-eclipse-based toolchains to set formatter options.
-
-It is based on K&R formatter with modifications to respect above rules.
-You can import it within eclipse settings, `Preferences -> LANGUAGE -> Code Style -> Formatter` tab.
